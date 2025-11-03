@@ -3,46 +3,46 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 df = pd.read_csv('attendance.csv')
-print("---- Attendance Data ----")
-print(df)
 
-df['Attendance_%'] = (df['Attended_Classes'] / df['Total_Classes']) * 100
-print("\n---- Attendance with Percentage ----")
-print(df)
+TOTAL_CLASSES = 40
 
-avg_attendance = df['Attendance_%'].mean()
-highest = df.loc[df['Attendance_%'].idxmax()]
-lowest = df.loc[df['Attendance_%'].idxmin()]
+df['Total_Attended'] = df[['Maths','Physics','Chemistry','English','Computer']].sum(axis=1)
+df['Total_Classes'] = TOTAL_CLASSES * 5
+df['Attendance_%'] = (df['Total_Attended'] / df['Total_Classes']) * 100
 
-print(f"\nAverage Class Attendance: {avg_attendance:.2f}%")
-print(f"Highest Attendance: {highest['Name']} ({highest['Attendance_%']:.2f}%)")
-print(f"Lowest Attendance: {lowest['Name']} ({lowest['Attendance_%']:.2f}%)")
+subject_avg = (df[['Maths','Physics','Chemistry','English','Computer']].mean() / TOTAL_CLASSES) * 100
 
-defaulters = df[df['Attendance_%'] < 75]
-print("\n---- Defaulters (Below 75%) ----")
-print(defaulters)
+df['Status'] = np.where(df['Attendance_%'] >= 75, 'Regular', 'Irregular')
+
+print("===== Student Attendance Summary =====\n")
+print(df[['Name','Roll_No','Attendance_%','Status']])
+
+print("\n===== Subject-wise Average Attendance (%) =====\n")
+print(subject_avg)
 
 plt.figure(figsize=(10,6))
 plt.bar(df['Name'], df['Attendance_%'], color='skyblue')
-plt.axhline(y=75, color='r', linestyle='--', label='Minimum Required (75%)')
-plt.title('Student Attendance Percentage')
-plt.xlabel('Students')
+plt.title('Overall Attendance Percentage per Student')
+plt.xlabel('Student Name')
 plt.ylabel('Attendance (%)')
-plt.legend()
+plt.xticks(rotation=45)
 plt.tight_layout()
 plt.show()
 
-total_classes = df['Total_Classes'].sum()
-attended_classes = df['Attended_Classes'].sum()
-absent_classes = total_classes - attended_classes
+plt.figure(figsize=(8,5))
+subject_avg.plot(kind='bar', color='lightgreen')
+plt.title('Average Attendance per Subject')
+plt.xlabel('Subjects')
+plt.ylabel('Attendance (%)')
+plt.tight_layout()
+plt.show()
 
+status_counts = df['Status'].value_counts()
 plt.figure(figsize=(5,5))
-plt.pie([attended_classes, absent_classes],
-        labels=['Attended', 'Missed'],
-        autopct='%1.1f%%', colors=['green','red'])
-plt.title('Overall Class Attendance Distribution')
+plt.pie(status_counts, labels=status_counts.index, autopct='%1.1f%%', startangle=90, colors=['#7FE9DE','#F5B7B1'])
+plt.title('Regular vs Irregular Students')
 plt.tight_layout()
 plt.show()
 
-df.to_csv('attendance_analysis_output.csv', index=False)
-print("\nAnalysis saved to 'attendance_analysis_output.csv'")
+df.to_csv('attendance_report.csv', index=False)
+print("\n✅ Attendance report saved as 'attendance_report.csv'")
